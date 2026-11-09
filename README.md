@@ -71,18 +71,18 @@ A writing site sends Provenance Guard a piece of text. Seven steps:
 
 ### The False Positive, Traced
 
-A student writes a weekly update in Chinese, has an AI tool translate it into plain English, and submits it. The ideas and facts are theirs.
+A writer who keeps their wording simple writes a short paragraph about their dog (short sentences, common words, a few typos) and submits it. They wrote every word.
 
 1. `POST /submit` receives the text.
-2. Signal one finds the plain wording predictable and scores it high.
-3. Signal two sees even, mid-length sentences and also leans AI.
-4. The combined confidence passes the AI threshold, so the system guesses "AI".
+2. Signal one scores it 0.40. Common words and short sentences are easy for GPT-2 to predict, though the typos pull the score down.
+3. Signal two scores it 0.56. Short, even sentences and simple vocabulary look machine-like.
+4. The combined score is 0.45, so the system says "unsure" instead of "human".
 
-**What the label says:** something like "We think this was probably written with AI." (final wording in Milestone 5)
+**What the label says:** "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review."
 
 **What they can do:** `POST /appeal` with the `content_id` and an explanation. The item moves to `under_review` and the appeal is logged next to the original decision.
 
-**What this means for thresholds:** the writer has little room to argue back, so the "high-confidence AI" line must be high. The price is more AI text getting through.
+**What this means for thresholds:** None of my human-written or AI-translated samples crossed 0.65, but plain writing lands in the middle, so a writer like this gets "unsure" at best. I set the AI line high so accusing a writer takes strong evidence. The price is that more AI text lands in "unsure" or "human".
 
 ### Endpoint Contracts
 
@@ -109,52 +109,43 @@ A student writes a weekly update in Chinese, has an AI tool translate it into pl
 <!-- ⚠️ The grader checks your code against that line. If your rule lives
      somewhere else, say where. -->
 
-**A case where my two signals split, and what my rule does with it:** **A case where my two signals split, and what my rule does with it:** A course-instruction paragraph written by a human scored 0.17 on signal one (jargon and filenames are hard for GPT-2 to predict) but 0.52 on signal two (its sentences are ordinary in length and vocabulary). The weighted average gives 0.27, which falls on the human side, so signal one's confidence carries through and signal two's lack of opinion doesn't drag it toward "AI".
+**A case where my two signals split, and what my rule does with it:**  A course-instruction paragraph written by a human scored 0.17 on signal one (jargon and filenames are hard for GPT-2 to predict) but 0.52 on signal two (its sentences are ordinary in length and vocabulary). The weighted average gives 0.27, which falls on the human side, so signal one's confidence carries through and signal two's lack of opinion doesn't drag it toward "AI".
 
 ---
+
 
 ## Label Variants
 
-<!-- The exact text of all three labels, as a reader would see them, and the
-     score range each covers.
-
-     Write them for someone who has never heard the word "threshold". -->
-
 | Label | Score range | The exact text a reader sees |
 |---|---|---|
-| high-confidence human |  |  |
-| unsure |  |  |
-| high-confidence AI |  |  |
+| high-confidence human | below 0.35 | We think this was written by a person. Thanks for sharing it. |
+| unsure | 0.35 to 0.65 | We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review. |
+| high-confidence AI | above 0.65 | We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look. |
 
 **Why I worded the "unsure" one this way:**
-<!-- It's the hardest of the three. It has to admit uncertainty without
-     sounding like an accusation, because the person reading it may well have
-     written every word themselves. -->
-
+The person reading it may have written every word themselves, so it says plainly that we are not sure, and that this is all it means, before anything else. "Nothing is wrong" keeps it from sounding like an accusation, and "ask for a review" points to the appeal path, which moves the item to `under_review`. I left out any promise that the piece stays published, because that is the site's decision, not this service's. I also left out any claim about which part looks like AI, because the system scores the whole text and cannot say which part.
 
 
 ---
-
 ## Sample Run
 
-<!-- One submission and one appeal, pasted as text: the request, the response,
-     and the log entries. -->
-
 **A submission**
-
-<!-- The response needs content_id, guess, confidence, label, AND both
-     signal scores - model_score and style_score. Unit 8's tools read those
-     two off the response, so leaving them out costs you next unit's
-     diagnostics. -->
 
 ```bash
 $ curl -X POST http://127.0.0.1:5000/submit \
   -H "Content-Type: application/json" \
-  -d '{"text": "...", "creator_id": "..."}'
+  -d '{"text": "I have a dog whose name is buu. he is 6ys old. He like playing ball with me and swimming in the lake. When we went to the beach, he dived in the water and stay there for whole day. He is really kind and nice, never mad with us. I cant imagin in the futere I will oh no, never!", "creator_id": "me"}'
 ```
 
 ```json
-
+{
+  "confidence": 0.4511,
+  "content_id": "8ac54785-c261-44f7-85c0-3abb7050eabd",
+  "guess": "unsure",
+  "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+  "model_score": 0.4046,
+  "style_score": 0.5597
+}
 ```
 
 **An appeal**
@@ -162,22 +153,56 @@ $ curl -X POST http://127.0.0.1:5000/submit \
 ```bash
 $ curl -X POST http://127.0.0.1:5000/appeal \
   -H "Content-Type: application/json" \
-  -d '{"content_id": "...", "reasoning": "..."}'
+  -d '{"content_id": "8ac54785-c261-44f7-85c0-3abb7050eabd", "reasoning": "I wrote this myself about my own dog."}'
 ```
 
 ```json
-
+{
+  "content_id": "8ac54785-c261-44f7-85c0-3abb7050eabd",
+  "message": "Thanks. We've recorded your appeal and the piece is now under review.",
+  "original_decision": {
+    "confidence": 0.4511,
+    "guess": "unsure",
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review."
+  },
+  "status": "under_review",
+  "your_reasoning": "I wrote this myself about my own dog."
+}
 ```
 
 **What the log shows afterwards**
 
 ```bash
-$ curl "http://127.0.0.1:5000/log?limit=3"
+$ curl "http://127.0.0.1:5000/log?limit=2"
 ```
 
 ```json
-
+{
+  "count": 2,
+  "entries": [
+    {
+      "combined_score": 0.4511,
+      "content_id": "8ac54785-c261-44f7-85c0-3abb7050eabd",
+      "creator_id": "me",
+      "guess": "unsure",
+      "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+      "model_score": 0.4046,
+      "status": "decided",
+      "style_score": 0.5597,
+      "timestamp": "2026-11-09T19:24:56+00:00"
+    },
+    {
+      "content_id": "8ac54785-c261-44f7-85c0-3abb7050eabd",
+      "creator_id": "me",
+      "event": "appeal",
+      "reasoning": "I wrote this myself about my own dog.",
+      "status": "under_review",
+      "timestamp": "2026-11-09T19:25:56+00:00"
+    }
+  ]
+}
 ```
+
 
 ---
 
@@ -185,15 +210,16 @@ $ curl "http://127.0.0.1:5000/log?limit=3"
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I asked Claude to search the web for how existing products tell users whether a text was written by AI or by a person.
+- *What came back:* Claude summarized the wording used by products that check student assignments and papers, and noted I couldn't copy it directly, because those results are written for teachers, while my labels are read by the writer themselves.
+- *What I changed:* I decided to make my labels more gentle, since they speak directly to the writer. 
+
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* I wasn't sure what the criteria prompt "how far apart should clearly-AI and clearly-human text score?" meant. I read it as how to draw the label ranges, and asked Claude whether that was right.
+- *What came back:* Claude said no. The label ranges are thresholds, which I choose. The score gap is measured: I score a batch of clearly-AI and clearly-human texts and see how far apart the two groups land. Scores come from the two signals and the combining rule, so moving the thresholds cannot change the gap. It only changes which label each score gets.
+- *What I changed:* I rewrote criterion 2 as something I can measure: the average AI score minus the average human score must be at least 0.5. I first tried "lowest AI score minus highest human score" at 0.4, then switched to averages, because one misjudged text would break the lowest-minus-highest version and I wanted this criterion to test whether the two groups separate overall. Individual misjudgments are covered by criteria 1 and 4. I also raised the target from 0.4 to 0.5 so it is not too easy.
 
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
