@@ -25,6 +25,7 @@ Routes:
 """
 
 import uuid
+import detector
 
 from flask import Flask, jsonify, request
 
@@ -201,16 +202,49 @@ def submit():
     """
     payload = request.get_json(silent=True) or {}
 
-    # TODO: delete this and build the route.
-    return jsonify({
-        "error": "not_implemented",
-        "message": "POST /submit isn't built yet — see the TODO in app.py.",
-        "you_sent": {
-            "text_length": len(payload.get("text", "")),
-            "creator_id": payload.get("creator_id"),
-        },
-    }), 501
+    text = payload.get("text")
+    creator_id = payload.get("creator_id")
 
+    
+    if not isinstance(text, str) or not text.strip():
+        audit.log_rejection(
+            creator_id=creator_id if isinstance(creator_id, str) else "unknown",
+            reason="missing_or_empty_text",
+        )
+        return jsonify({
+            "error": "invalid_input",
+            "message": "Please send some text to check.",
+        }), 400
+
+    if not isinstance(creator_id, str) or not creator_id.strip():
+        audit.log_rejection(creator_id="unknown", reason="missing_creator_id")
+        return jsonify({
+            "error": "invalid_input",
+            "message": "creator_id is required.",
+        }), 400
+
+    try:
+        model_score = detector.model_signal(text)
+    except ValueError as exc:
+        audit.log_rejection(creator_id=creator_id, reason="text_too_short")
+        return jsonify({"error": "invalid_input", "message": str(exc)}), 400
+
+    content_id = str(uuid.uuid4())
+
+    audit.log_decision(
+        content_id=content_id,
+        creator_id=creator_id,
+        model_score=model_score,
+    )
+
+    return jsonify({
+        "content_id": content_id,
+        "guess": "unsure",
+        "confidence": 0.5,
+        "label": "PLACEHOLDER",
+        "model_score": model_score,
+        "style_score": None,
+    })
 
 @app.post("/appeal")
 def appeal():
