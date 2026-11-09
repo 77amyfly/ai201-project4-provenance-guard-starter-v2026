@@ -36,36 +36,65 @@
 
 ## What This Does
 
-<!-- The path a submission takes, from arriving to the label a reader sees.
-     Six or seven steps — this is the trace you wrote in Milestone 1. -->
 
+A writing site sends Provenance Guard a piece of text. Seven steps:
+
+1. **Receive and check.** `POST /submit` validates the input.
+2. **Signal one.** A local language model scores the text.
+3. **Signal two.** My style program scores its shape.
+4. **Combine.** Both scores become one confidence and a guess.
+5. **Label.** The confidence picks one of three labels.
+6. **Log.** The scores, guess, and status go in the audit log.
+7. **Respond.** The site gets the result.
 
 
 ---
 
 ## Signals and Scoring
 
-<!-- For each signal: what property it measures, why that might differ between
-     human and AI writing, and WHAT IT CAN'T SEE.
-
-     The blind spot is not optional. If you can't name it you don't understand
-     the signal yet — and unit 8's attack set is built out of blind spots. -->
 
 ### Signal one — the model signal
 
-**What it measures:**
+**What it measures:** How predictable the wording is to a small local language model (GPT-2). The model reads the text and computes perplexity, a measure of how surprised it is by each next word. A logistic function, `1 / (1 + (perplexity / 45) ** 1.6)`, turns that into a score from 0 to 1, where higher means more likely AI.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** AI text is built by choosing likely next words, so another language model finds it easy to predict. Human writing tends to include odd word choices, personal details, and tangents that a model finds more surprising.
 
-**What it can't see:**
+**What it can't see:** Who actually wrote the text. It measures how predictable the wording is, not authorship. Plain, common words in short sentences score as machine-like, and many real people write that way, such as second-language writers. Human work that passes through AI wording, like a translation, also looks partly AI. In the other direction, text full of rare words, jargon, or filenames scores as human, because GPT-2 cannot predict those words.
 
 ### Signal two — the style signal
 
-**What it measures:**
+**What it measures:** The shape of the text, not its meaning: how much sentence length varies, how much vocabulary repeats, and how much punctuation is used. The three are combined into one score from 0 to 1, where higher means more likely AI.
 
-**Why that might differ between human and AI writing:**
+**Why that might differ between human and AI writing:** AI sentences tend to be even and mid-length with a narrow word range. Human writing is lumpier: short and long sentences mixed together.
 
-**What it can't see:**
+**What it can't see:** What the text says. Adding typos, splitting long sentences, or pasting in a quotation changes the shape without changing the substance, so the score moves.
+
+### The False Positive, Traced
+
+A student writes a weekly update in Chinese, has an AI tool translate it into plain English, and submits it. The ideas and facts are theirs.
+
+1. `POST /submit` receives the text.
+2. Signal one finds the plain wording predictable and scores it high.
+3. Signal two sees even, mid-length sentences and also leans AI.
+4. The combined confidence passes the AI threshold, so the system guesses "AI".
+
+**What the label says:** something like "We think this was probably written with AI." (final wording in Milestone 5)
+
+**What they can do:** `POST /appeal` with the `content_id` and an explanation. The item moves to `under_review` and the appeal is logged next to the original decision.
+
+**What this means for thresholds:** the writer has little room to argue back, so the "high-confidence AI" line must be high. The price is more AI text getting through.
+
+### Endpoint Contracts
+
+**POST /submit**
+- In: `text`, `creator_id`
+- Out: `content_id`, `guess`, `confidence`, `label`, `model_score`, `style_score`
+
+**POST /appeal**
+- In: `content_id`, `reasoning`
+- Out: a confirmation that the item is now `under_review`
+- Checks that the `content_id` exists; records the appeal in the log
+
 
 ### The combining rule
 
