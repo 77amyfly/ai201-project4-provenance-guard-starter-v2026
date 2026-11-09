@@ -44,61 +44,42 @@ Two things worth knowing before you pick numbers:
 ---
 ## 1.
 
-<!-- Your criterion. It must name a number. -->
+Take 10 randomly chosen passages of human-written English from public media, each 80 to 150 words. At most 1 may be labeled "high-confidence AI".
 
-
-
-**Why this target:**
-
+**Why this target:** A false accusation costs a writer more than a missed AI text, so this target is strict.
 
 
 ---
 
 ## 2.
 
-<!-- Your criterion. -->
+Take 10 clearly-AI passages and 10 clearly-human passages. The average AI score minus the average human score must be at least 0.5.
 
-
-
-**Why this target:**
-
-
+**Why this target:** If the two groups barely separate on average, the signals can't tell them apart and the labels mean nothing.
 
 ---
 
 ## 3.
 
-<!-- Your criterion. -->
+Run 10 human passages, 10 AI passages, and 10 human/AI mixed passages through /submit. Each of the three labels appears at least once.
 
-
-
-**Why this target:**
-
-
+**Why this target:** A label no text can reach is a promise the system can't keep.
 
 ---
 
 ## 4.
 
-<!-- Your criterion. -->
+Take 10 AI-generated passages, each 80 to 150 words. At most 2 may fail to be labeled "high-confidence AI".
 
-
-
-**Why this target:**
-
-
+**Why this target:** This is a false negative, and a missed AI text costs less than a false accusation, so the target is looser than criterion 1. The looseness is deliberate: it leaves room to keep criterion 1 strict.
 
 ---
 
 ## 5.
 
-<!-- Your criterion. -->
+Send `/submit` 10 requests with `text` missing or empty. All 10 must be rejected with an error message, and none may be scored.
 
-
-
-**Why this target:**
-
-
+**Why this target:** There is nothing to judge in an empty submission, so the system must refuse instead of guessing.
 
 ---
 
