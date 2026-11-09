@@ -100,19 +100,16 @@ A student writes a weekly update in Chinese, has an AI tool translate it into pl
 
 <!-- Write the rule in words, then give the numbers. What happens when the two
      signals disagree? -->
+**The rule:** A fixed weighted average. Signal one (the model signal) counts for most of the score, and signal two (the style signal) counts for less. Both run from 0 to 1 and both mean "higher = more likely AI", so they can be averaged directly. There is no special rule for disagreement: when the signals split, the average lands between them.
 
-**The rule:**
+**The numbers:** `0.7 × model_score + 0.3 × style_score`. Signal one separated my samples much better (0.17 to 0.84), while signal two stayed between 0.40 and 0.56 on all four, so it gets the smaller weight. I kept it above zero because it looks at different properties of the text, so it is a small check on signal one's blind spot. The weights are set by hand from four samples, not learned from data.
 
-**The numbers:**
-
-**Where it lives:** `scoring.py::combine_signals`
+**Where it lives:** `scoring.py::combine_signals` (weights in `config.py`)
 
 <!-- ⚠️ The grader checks your code against that line. If your rule lives
      somewhere else, say where. -->
 
-**A case where my two signals split, and what my rule does with it:**
-
-
+**A case where my two signals split, and what my rule does with it:** **A case where my two signals split, and what my rule does with it:** A course-instruction paragraph written by a human scored 0.17 on signal one (jargon and filenames are hard for GPT-2 to predict) but 0.52 on signal two (its sentences are ordinary in length and vocabulary). The weighted average gives 0.27, which falls on the human side, so signal one's confidence carries through and signal two's lack of opinion doesn't drag it toward "AI".
 
 ---
 

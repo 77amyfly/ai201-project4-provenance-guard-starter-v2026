@@ -2,3 +2,8 @@
 {"timestamp": "2026-11-09T07:22:54+00:00", "creator_id": "me", "event": "rejected", "status": "rejected", "reason": "missing_or_empty_text"}
 {"timestamp": "2026-11-09T07:22:54+00:00", "creator_id": "me", "event": "rejected", "status": "rejected", "reason": "missing_or_empty_text"}
 {"timestamp": "2026-11-09T07:27:03+00:00", "content_id": "98f185be-9b9c-40a3-a226-d258ce0d3c96", "creator_id": "me", "guess": null, "model_score": 0.8733, "style_score": null, "combined_score": null, "label": null, "status": "decided"}
+{"timestamp": "2026-11-09T08:00:54+00:00", "content_id": "33f9aa6d-63bd-4d1c-b746-f3a8624e9a0a", "creator_id": "me", "guess": null, "model_score": 0.2026, "style_score": 0.5003, "combined_score": 0.2919, "label": null, "status": "decided"}
+{"timestamp": "2026-11-09T08:11:09+00:00", "content_id": "e0040725-8096-4aa3-90c9-75a21f3ce41c", "creator_id": "me", "guess": null, "model_score": 0.8441, "style_score": 0.5556, "combined_score": 0.7575, "label": null, "status": "decided"}
+{"timestamp": "2026-11-09T08:11:22+00:00", "content_id": "461a6f16-b887-4e62-a0fc-e03db7a436b6", "creator_id": "me", "guess": null, "model_score": 0.1655, "style_score": 0.5226, "combined_score": 0.2726, "label": null, "status": "decided"}
+{"timestamp": "2026-11-09T08:11:28+00:00", "content_id": "f9d550ff-8330-4714-b2d7-2a266b725839", "creator_id": "me", "guess": null, "model_score": 0.5383, "style_score": 0.4027, "combined_score": 0.4976, "label": null, "status": "decided"}
+{"timestamp": "2026-11-09T08:11:36+00:00", "content_id": "6a0b6ee0-3fe9-42c9-a7a7-a85f70d83e3f", "creator_id": "me", "guess": null, "model_score": 0.4046, "style_score": 0.5597, "combined_score": 0.4511, "label": null, "status": "decided"}

@@ -26,6 +26,8 @@ Routes:
 
 import uuid
 import detector
+import scoring
+import stylometry
 
 from flask import Flask, jsonify, request
 
@@ -229,21 +231,26 @@ def submit():
         audit.log_rejection(creator_id=creator_id, reason="text_too_short")
         return jsonify({"error": "invalid_input", "message": str(exc)}), 400
 
+    style_score = stylometry.style_signal(text)
+    combined = scoring.combine_signals(model_score, style_score)
+
     content_id = str(uuid.uuid4())
 
     audit.log_decision(
         content_id=content_id,
         creator_id=creator_id,
         model_score=model_score,
+        style_score=style_score,
+        combined_score=round(combined, 4),
     )
 
     return jsonify({
         "content_id": content_id,
         "guess": "unsure",
-        "confidence": 0.5,
+        "confidence": round(combined, 4),
         "label": "PLACEHOLDER",
         "model_score": model_score,
-        "style_score": None,
+        "style_score": style_score,
     })
 
 @app.post("/appeal")
