@@ -232,23 +232,26 @@ def submit():
         return jsonify({"error": "invalid_input", "message": str(exc)}), 400
 
     style_score = stylometry.style_signal(text)
-    combined = scoring.combine_signals(model_score, style_score)
+    combined = round(scoring.combine_signals(model_score, style_score), 4)
+    guess, label = scoring.score_to_label(combined)
 
     content_id = str(uuid.uuid4())
 
     audit.log_decision(
         content_id=content_id,
         creator_id=creator_id,
+        guess=guess,
         model_score=model_score,
         style_score=style_score,
-        combined_score=round(combined, 4),
+        combined_score=combined,
+        label=label,
     )
 
     return jsonify({
         "content_id": content_id,
-        "guess": "unsure",
-        "confidence": round(combined, 4),
-        "label": "PLACEHOLDER",
+        "guess": guess,
+        "confidence": combined,
+        "label": label,
         "model_score": model_score,
         "style_score": style_score,
     })
@@ -275,13 +278,41 @@ def appeal():
     """
     payload = request.get_json(silent=True) or {}
 
-    # TODO: delete this and build the route.
-    return jsonify({
-        "error": "not_implemented",
-        "message": "POST /appeal isn't built yet — see the TODO in app.py.",
-        "you_sent": payload,
-    }), 501
+    content_id = payload.get("content_id")
+    reasoning = payload.get("reasoning")
 
+    if (not isinstance(content_id, str) or not content_id.strip()
+            or not isinstance(reasoning, str) or not reasoning.strip()):
+        return jsonify({
+            "error": "invalid_input",
+            "message": "Please send the content_id and your reasoning.",
+        }), 400
+
+    entries = audit.entries_for(content_id)
+    decision = next((e for e in entries if e.get("event") != "appeal"), None)
+    if decision is None:
+        return jsonify({
+            "error": "not_found",
+            "message": "We couldn't find a submission with that content_id.",
+        }), 404
+
+    audit.log_appeal(
+        content_id=content_id,
+        creator_id=decision["creator_id"],
+        reasoning=reasoning,
+    )
+
+    return jsonify({
+        "content_id": content_id,
+        "status": "under_review",
+        "message": "Thanks. We've recorded your appeal and the piece is now under review.",
+        "original_decision": {
+            "guess": decision.get("guess"),
+            "label": decision.get("label"),
+            "confidence": decision.get("combined_score"),
+        },
+        "your_reasoning": reasoning,
+    })
 
 # ── Already works ─────────────────────────────────────────────────────────────
 
