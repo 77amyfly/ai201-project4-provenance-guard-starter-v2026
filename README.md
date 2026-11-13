@@ -227,24 +227,26 @@ $ curl "http://127.0.0.1:5000/log?limit=2"
 
 ## Rate Limiting
 
-**My limits:** ___ per minute, ___ per day
+**My limits:** 10 per minute, 100 per day
 
 **Why those numbers and not others:**
-<!-- Think about two people: a real writer submitting their own work a few
-     times an hour, and a script sending a thousand variations to map your
-     thresholds. Your numbers have to be liveable for the first and hostile to
-     the second. -->
 
-**What a caller counts as:** <!-- per address, or per creator_id? They fail
+10 a minute is one submission every six seconds, far faster than anyone writing their own work. I could have used 3 and still not caught a real writer, but 10 leaves room for quick drafts and browser retries.
+100 a day is what costs an attacker something. Finding my 0.35 and 0.65 boundaries by binary search takes dozens of probes, so 100 a day buys an outline and takes days of visible log. At 500 a day the same script finishes in an afternoon.
+Ten a minute for ten minutes is the whole daily budget, so the minute limit shapes bursts and the day limit is the real wall.
+
+
+**What a caller counts as:** creator_id, falling back to the IP address when a request has no usable creator_id. That stops one creator from flooding, but a script can dodge it by rotating creator_ids, and malformed requests all share the sender's address.
+<!-- per address, or per creator_id? They fail
 differently — one script can look like a thousand callers, and one household
 can look like one. -->
 
-**The run of status codes when I pushed past it:**
+**The run of status codes when I pushed past it:** 
 
 <!-- python run_attacks.py --flood 15 -->
 
 ```
-
+200 200 200 200 200 200 200 200 200 200 429 429 429 429 429
 ```
 
 ---
