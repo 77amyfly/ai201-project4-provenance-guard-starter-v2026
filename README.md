@@ -221,6 +221,13 @@ $ curl "http://127.0.0.1:5000/log?limit=2"
 - *What came back:* Claude said no. The label ranges are thresholds, which I choose. The score gap is measured: I score a batch of clearly-AI and clearly-human texts and see how far apart the two groups land. Scores come from the two signals and the combining rule, so moving the thresholds cannot change the gap. It only changes which label each score gets.
 - *What I changed:* I rewrote criterion 2 as something I can measure: the average AI score minus the average human score must be at least 0.5. I first tried "lowest AI score minus highest human score" at 0.4, then switched to averages, because one misjudged text would break the lowest-minus-highest version and I wanted this criterion to test whether the two groups separate overall. Individual misjudgments are covered by criteria 1 and 4. I also raised the target from 0.4 to 0.5 so it is not too easy.
 
+**Moment 3**
+
+- *What I asked for:* I gave Claude my attack-run report from the "before" run and asked it to read and summarize the results by attack family, and to say which pipeline stage each family points at.
+- *What came back:* Claude grouped the 56 attacks by family and matched each to a stage: typos beat signal one, evasions that landed on "unsure" came from my label thresholds, malformed inputs exposed missing checks in the route, and the false positives came from both signals reading plain human writing as AI. It also showed that the attack set's own "targeting" labels were not always the real cause, so I checked the scores myself.
+- *What I changed:* Because I now knew the cause of each failure, I looked for a fix aimed at one specific stage.
+
+
 <!-- ═══════════════════════ UNIT 8 — THE TEST ═══════════════════════ -->
 
 ---
@@ -979,8 +986,7 @@ Every other gap is far too wide for a threshold change to matter.
 
 ## The Improvement
 
-**What I changed:** `AI_THRESHOLD` in `config.py`, from 0.65 to 0.80. That one
-number and nothing else.
+**What I changed:** `AI_THRESHOLD` in `config.py`, from 0.65 to 0.80. 
 
 **Which diagnosis pointed at it:** the signal one diagnosis. The raw perplexity
 of my two groups came in at a median of 30.6 for the human passages and 36.7 for
@@ -1092,14 +1098,10 @@ label mapping moved, which is what makes the two runs comparable.
 | 5. Empty or missing text refused | 10/10 x3 — MET | 10/10 x3 — MET |
 
 Produced by `run_eval.py::main`; full output in
-`results/run_2026-11-13_2354_after.md`. All three trials matched again, for the
-same reason as before: neither signal samples.
+`results/run_2026-11-13_2354_after.md`. All three trials matched again, for the same reason as before: neither signal samples.
 
-It helped in the sense that human writing is no longer accused. But the `ai`
-label became unreachable across all thirty of my evaluation passages, so one of
-the three labels promised in Label Variants is now an empty promise, and the AI
-passages went from seven missed to ten. That amounts to the detector losing the
-ability to detect. I do not consider this a real improvement.
+It helped in the sense that human writing is no longer accused. But the `ai`label became unreachable across all thirty of my evaluation passages, so one of the three labels promised in Label Variants is now an empty promise, and the AI
+passages went from seven missed to ten. That amounts to the detector losing the ability to detect. I do not consider this a real improvement.
 
 ---
 
@@ -1107,6 +1109,25 @@ ability to detect. I do not consider this a real improvement.
 
 <!-- For each attack still getting through and each criterion still missed:
      what you'd do, and why you stopped. -->
+Sixteen attacks still break and three criteria are still missed. They fall into four groups.
+
+**Signal one cannot separate the two groups** — criteria 2 and 4, the nine evasion attacks, MF08.
+
+What I would do: replace signal one. GPT-2 perplexity carries no signal on 2026-era AI text, so this needs a detector trained on current model output, or a different approach entirely.
+
+Why I stopped: this is not a tuning problem, and this unit allows one change. Replacing signal one means rewriting half of what I built in unit 7.
+
+**The `ai` label is unreachable** — criterion 3.
+
+What I would do: move the threshold back once signal one can separate the two groups.
+
+Why I stopped: moving it back now simply returns the six false positives. This label is the price I paid for criterion 1, and until signal one works there is nothing cheaper to pay with.
+
+**The route does not check its input** — RQ07, MF03, MF04, MF05, MF06, MF07.
+
+What I would do: require the body to be a JSON object, and require the text to contain at least five recognisable words. I measured that threshold against every input I have: it rejects exactly those five inputs and touches nothing legitimate, including FP08, a genuine eight-word human submission.
+
+Why I stopped: this and the threshold change were the two candidates and I took the threshold. This is the clearest and cheapest group of the four, and it is what I would do next.
 
 
 
@@ -1115,7 +1136,7 @@ ability to detect. I do not consider this a real improvement.
 <!-- Two sentences. Fewer wrong accusations means more AI text getting through.
      Say which way you'd go and WHO PAYS FOR IT. -->
 
-
+I would keep moving toward fewer accusations even though it means most AI text gets through. The site pays for that, by accepting AI writing on its pages or finding another way to deal with it, rather than a writer paying for it by being accused wrongly and having to prove otherwise.
 
 <!-- ═════════════════════════════════════════════════════════════════════
 
