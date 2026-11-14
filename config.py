@@ -72,7 +72,14 @@ WEIGHT_STYLE_SIGNAL = 0.3
 # that decide who pays for it.
 
 HUMAN_THRESHOLD = 0.35
-AI_THRESHOLD = 0.65
+# Unit 8, Milestone 5 — the one improvement. Was 0.65.
+# Six of the eight false_positive attacks landed between 0.71 and 0.79, and
+# five of my own ten human passages landed between 0.66 and 0.75. Nothing a
+# threshold can do makes signal one separate the two groups, so this raises the
+# line to where none of that human writing gets accused. The cost is that the
+# `ai` label stops being reachable for ordinary prose. See README, "The
+# Improvement".
+AI_THRESHOLD = 0.80
 
 # ⚠️ One thing that catches people out in Milestone 5. A weighted average can
 # only land between its two inputs — so while `style_signal` is still the stub

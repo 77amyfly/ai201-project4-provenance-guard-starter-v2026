@@ -979,22 +979,127 @@ Every other gap is far too wide for a threshold change to matter.
 
 ## The Improvement
 
-**What I changed:**
+**What I changed:** `AI_THRESHOLD` in `config.py`, from 0.65 to 0.80. That one
+number and nothing else.
 
-**Which diagnosis pointed at it:**
+**Which diagnosis pointed at it:** the signal one diagnosis. The raw perplexity
+of my two groups came in at a median of 30.6 for the human passages and 36.7 for
+the AI ones, with the ranges almost entirely overlapping. There is no usable
+line between them, so the system should not be making confident accusations off
+that score. Six of the eight false positives landed between 0.71 and 0.79, and
+five of my own ten human passages landed between 0.66 and 0.75. Moving the line
+to 0.80 puts all of that human writing back under it.
 
 ### Attack Run — After
 
-<!-- Same format. `run_attacks.py --label after` -->
+56 attacks, run with `python run_attacks.py --set attack_set --label after`.
+Full report: `results/attack_run_2026-11-13_2354_after.md`.
 
+**HELD 40 · BROKE 16** (before: HELD 34 · BROKE 22)
 
+| Family | Attacks | HELD | BROKE |
+|---|---|---|---|
+| `evasion` | 10 | 1 | 9 |
+| `false_positive` | 8 | 8 | 0 |
+| `prompt_injection` | 6 | 6 | 0 |
+| `malformed` | 20 | 13 | 7 |
+| `flood_same_creator` | 12 | 12 | 0 |
+
+Six attacks changed, all of them in the `false_positive` family, all from `ai`
+to `unsure`:
+
+| ID | Before | After |
+|---|---|---|
+| FP02 | ai 0.7176 | unsure 0.7176 |
+| FP03 | ai 0.7584 | unsure 0.7584 |
+| FP04 | ai 0.7606 | unsure 0.7606 |
+| FP05 | ai 0.7646 | unsure 0.7646 |
+| FP06 | ai 0.7864 | unsure 0.7864 |
+| FP07 | ai 0.7870 | unsure 0.7870 |
+
+Every one of the 56 confidence scores is identical before and after. Only the
+label mapping moved, which is what makes the two runs comparable.
+
+**Every attack, with what came back and a held-or-broke mark**
+
+| ID | Family | Targeting | Status | Guess | Score | Verdict |
+|---|---|---|---|---|---|---|
+| EV01 | evasion | signal two: typos raise word variety | 200 | human | 0.296 | BROKE |
+| EV02 | evasion | signal two: broken-up sentences raise length spread | 200 | unsure | 0.534 | BROKE |
+| EV03 | evasion | signal two: a pasted quotation changes the shape | 200 | unsure | 0.622 | BROKE |
+| EV04 | evasion | signal one: unusual words raise perplexity | 200 | unsure | 0.604 | BROKE |
+| EV05 | evasion | both signals: heavy human editing pass | 200 | unsure | 0.352 | BROKE |
+| EV06 | evasion | signal two: one very long sentence and one very short | 200 | unsure | 0.515 | BROKE |
+| EV07 | evasion | signal two: padding with punctuation | 200 | unsure | 0.557 | BROKE |
+| EV08 | evasion | signal one: text below the token window | 200 | human | 0.343 | BROKE |
+| EV09 | evasion | both: AI text with a human opening paragraph bolted on | 200 | unsure | 0.643 | BROKE |
+| EV10 | evasion | signal two: repeated stanza structure | 200 | ai | 0.914 | HELD |
+| FP01 | false_positive | plain, clear human writing with no flourishes | 200 | unsure | 0.609 | HELD |
+| FP02 | false_positive | human writing in a formal register | 200 | unsure | 0.718 | HELD |
+| FP03 | false_positive | a non-native English speaker writing carefully | 200 | unsure | 0.758 | HELD |
+| FP04 | false_positive | a student essay written to a rubric | 200 | unsure | 0.761 | HELD |
+| FP05 | false_positive | technical documentation written by a person | 200 | unsure | 0.765 | HELD |
+| FP06 | false_positive | a person imitating a formal template | 200 | unsure | 0.786 | HELD |
+| FP07 | false_positive | human writing that repeats a phrase deliberately | 200 | unsure | 0.787 | HELD |
+| FP08 | false_positive | very short genuine human submission | 200 | unsure | 0.382 | HELD |
+| PI01 | prompt_injection | instruction to ignore the check | 200 | unsure | 0.464 | HELD |
+| PI02 | prompt_injection | instruction disguised as a system message | 200 | human | 0.268 | HELD |
+| PI03 | prompt_injection | instruction wrapped in the writer's voice | 200 | unsure | 0.573 | HELD |
+| PI04 | prompt_injection | attempt to make the label text hostile | 200 | unsure | 0.498 | HELD |
+| PI05 | prompt_injection | attempt to inject into the audit log | 200 | unsure | 0.538 | HELD |
+| PI06 | prompt_injection | instruction plus real human text | 200 | unsure | 0.570 | HELD |
+| MF01 | malformed | text is only whitespace | 400 | — | — | HELD |
+| MF02 | malformed | text is a single character | 400 | — | — | HELD |
+| MF03 | malformed | text is control characters | 200 | human | 0.200 | BROKE |
+| MF04 | malformed | text is only punctuation | 200 | human | 0.308 | BROKE |
+| MF05 | malformed | text is a very long single word | 200 | ai | 0.898 | BROKE |
+| MF06 | malformed | text is emoji only | 200 | ai | 0.998 | BROKE |
+| MF07 | malformed | text is right-to-left script | 200 | ai | 0.934 | BROKE |
+| MF08 | malformed | text is 60,000 characters | 200 | ai | 0.941 | BROKE |
+| RQ01 | malformed | no text field at all | 400 | — | — | HELD |
+| RQ02 | malformed | no creator_id | 400 | — | — | HELD |
+| RQ03 | malformed | text is a number | 400 | — | — | HELD |
+| RQ04 | malformed | text is a list | 400 | — | — | HELD |
+| RQ05 | malformed | text is null | 400 | — | — | HELD |
+| RQ06 | malformed | creator_id is an object | 400 | — | — | HELD |
+| RQ07 | malformed | body is a JSON array, not an object | 500 | — | — | BROKE |
+| RQ08 | malformed | body is unparseable JSON | 400 | — | — | HELD |
+| RQ09 | malformed | body is empty | 400 | — | — | HELD |
+| RQ10 | malformed | body is form-encoded, not JSON | 400 | — | — | HELD |
+| RQ11 | malformed | body is JSON claiming to be plain text | 400 | — | — | HELD |
+| RQ12 | malformed | deeply nested JSON | 400 | — | — | HELD |
+| FL01_01 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_02 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_03 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_04 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_05 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_06 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_07 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_08 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_09 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_10 | flood_same_creator | 20 rapid submissions from one creator | 200 | human | 0.220 | HELD |
+| FL01_11 | flood_same_creator | 20 rapid submissions from one creator | 429 | — | — | HELD |
+| FL01_12 | flood_same_creator | 20 rapid submissions from one creator | 429 | — | — | HELD |
 
 **Did it help, and how do I know:**
 
-<!-- Widening the unsure band usually fixes one problem and creates another.
-     Reporting that trade honestly is worth full credit. -->
+| Criterion | Before (3 trials) | After (3 trials) |
+|---|---|---|
+| 1. Human writing labelled AI | 5/10, 5/10, 5/10 — MISSED | 0/10, 0/10, 0/10 — **MET** |
+| 2. Mean score gap | 0.0075 x3 — MISSED | 0.0075 x3 — MISSED |
+| 3. All three labels reachable | 3/3 x3 — MET | 2/3 x3 — **MISSED** |
+| 4. AI passages not labelled AI | 7/10 x3 — MISSED | 10/10 x3 — MISSED |
+| 5. Empty or missing text refused | 10/10 x3 — MET | 10/10 x3 — MET |
 
+Produced by `run_eval.py::main`; full output in
+`results/run_2026-11-13_2354_after.md`. All three trials matched again, for the
+same reason as before: neither signal samples.
 
+It helped in the sense that human writing is no longer accused. But the `ai`
+label became unreachable across all thirty of my evaluation passages, so one of
+the three labels promised in Label Variants is now an empty promise, and the AI
+passages went from seven missed to ten. That amounts to the detector losing the
+ability to detect. I do not consider this a real improvement.
 
 ---
 
