@@ -902,19 +902,76 @@ returned 400 and none were scored.
 
 **Diagnoses**
 
-<!-- For each miss AND each broken attack: the stage and the mechanism.
+**The pattern: 18 of the 25 failures are one problem.** Signal one runs
+backwards, and my combining rule gives it a weight of 0.7.
 
-     Your service has five stages: the route, signal one, signal two, the
-     combining rule, and the label mapping.
+### Signal one — it measures the wrong thing (18 failures)
 
-     Not a diagnosis:  "The evasion attacks got through."
-     A diagnosis:      "Four evasion inputs got through. All four had typos
-                        added to AI-generated text. My second signal measures
-                        word variety, and typos raise word variety — so it read
-                        them as more human. My combining rule weights that
-                        signal at 0.6, so it dragged the whole score down."
+Covers all three missed criteria, seven of the nine evasion attacks, all six
+false positives, MF05 and MF08.
 
-     Look for a pattern. Five failures on one signal is one problem, not five. -->
+Signal one scores GPT-2's perplexity: the easier the text is to predict, the
+more AI it is called. But GPT-2 is a 2019 model trained on web pages, news and
+encyclopaedia articles, which is exactly what edited published prose looks
+like. I measured the raw perplexity of my two groups: the human passages came
+in at a median of 30.6 and the AI passages at 36.7. The human writing was the
+more predictable of the two.
+
+So this signal is measuring how much a text resembles 2019 web writing, not who
+wrote it. The two groups overlap almost completely and there is no usable line
+between them. FP03 is the clearest consequence: someone writing in a second
+language keeps their words common and their sentences even, and that is the
+text GPT-2 predicts best of all.
+
+### The combining rule — it puts the weight on the broken signal (3 failures)
+
+Covers criterion 2, EV03 and EV09.
+
+The rule is `0.7 x signal one + 0.3 x signal two`. Signal two actually points
+the right way, scoring the AI group 0.076 higher than the human group, but it
+only counts for 0.3. Signal one points the wrong way and counts for 0.7. The
+two very nearly cancel, which is why criterion 2 came out at a gap of 0.0075
+instead of the 0.5 I asked for.
+
+EV03 and EV09 show it concretely. On both of those, signal one was right: it
+scored them 0.666 and 0.704, over my 0.65 line. Signal two pulled the combined
+score back under. The rule is not computing anything incorrectly; it is
+trusting the wrong one of the two.
+
+### The route — it never checks that the input is scoreable prose (5 failures)
+
+Covers RQ07, MF03, MF04, MF06 and MF07.
+
+RQ07 is a crash. When the body is a JSON array, `get_json` returns a list, the
+`or {}` fallback does not fire because a non-empty list is truthy, and the next
+line calls `.get` on a list and returns a 500. Worse, it crashes before any
+logging call, so that attack left no entry in my audit log at all.
+
+The other four should never have been scored. Control characters, bare
+punctuation, emoji and Arabic are not English prose, and both my signals are
+only defined on English prose. The route checks that `text` is a non-empty
+string and nothing else, so all four went straight through to the signals.
+
+### Signal two — its "no data" default points the wrong way (3 failures)
+
+Covers MF04, MF06 and MF07.
+
+The word-splitting regex in `stylometry.words` only matches ASCII letters and
+digits, so Arabic, emoji and bare punctuation produce no words at all. All
+three sub-measures return their 0.0 "nothing to measure" value, `style_signal`
+flips each one with `1.0 - x`, and the result is 1.0.
+
+"I cannot measure this" comes out as "I am completely certain this is AI".
+MF07 is real Arabic prose accused at 0.9345, and the only reason is that my
+regex cannot see Arabic letters.
+
+### The label mapping — one genuine threshold failure (1 failure)
+
+Covers EV09, which also appears under the combining rule.
+
+EV09 scored 0.6435 against an AI threshold of 0.65, missing by 0.0065. It is
+the only failure in the run that moving a threshold slightly would have caught.
+Every other gap is far too wide for a threshold change to matter.
 
 
 
