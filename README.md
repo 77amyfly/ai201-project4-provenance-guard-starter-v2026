@@ -364,21 +364,540 @@ to argue back.
 
 ## Run Log and Verdicts
 
-<!-- Your five criteria across three trials. `run_eval.py --label before`. -->
-
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1.  |  |  |  |  |  |
-| 2.  |  |  |  |  |  |
-| 3.  |  |  |  |  |  |
-| 4.  |  |  |  |  |  |
-| 5.  |  |  |  |  |  |
+| 1. Human writing labelled AI | <= 1 of 10 | 5/10 | 5/10 | 5/10 | **MISSED** |
+| 2. Mean AI score minus mean human score | >= 0.5 | 0.0075 | 0.0075 | 0.0075 | **MISSED** |
+| 3. All three labels reachable | 3 of 3 | 3/3 | 3/3 | 3/3 | MET |
+| 4. AI passages not labelled AI | <= 2 of 10 | 7/10 | 7/10 | 7/10 | **MISSED** |
+| 5. Empty or missing text refused | 10 of 10 | 10/10 | 10/10 | 10/10 | MET |
 
-**Real output from one trial**, pasted as text, naming the file and function
-that produced it:
+All three trials returned identical numbers. Neither signal samples: GPT-2 runs
+without sampling and the style signal is arithmetic over the text, so the same
+input scores the same every time. Three matching trials are the expected result
+here, not a sign that a trial was skipped.
+
+**Real output from one trial**, pasted as text. Produced by
+`run_eval.py::main`, which posts each body to `app.py::submit`; the scores come
+from `scoring.py::combine_signals`. Full output for all three trials is in
+`results/run_2026-11-13_1703_before.md`.
+
+**Criterion 1** — ten human passages. Five came back `ai`, against a target of
+at most one.
 
 ```json
+[
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.3433,
+    "model_score": 0.2927,
+    "style_score": 0.4613,
+    "label": "We think this was written by a person. Thanks for sharing it.",
+    "sent": "In your breakout: bring your worst failure. Share the input and what y"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5292,
+    "model_score": 0.493,
+    "style_score": 0.6136,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Prorated by the second. If a service is active for ten seconds in a gi"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.6595,
+    "model_score": 0.7661,
+    "style_score": 0.4107,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Dogs have been bred for specific behaviors, sensory abilities, and phy"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4192,
+    "model_score": 0.4357,
+    "style_score": 0.3808,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "What makes your program special? Intentional Breeding, Not Mass Produc"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4952,
+    "model_score": 0.551,
+    "style_score": 0.365,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "I would assume #1 but only because dog meat is not commonly eaten in t"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5666,
+    "model_score": 0.5865,
+    "style_score": 0.5203,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Since the beginning of humankind, we have gone all the way from caves "
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.705,
+    "model_score": 0.7907,
+    "style_score": 0.5051,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Imagine yourself as a glass statue. It tips over and smashes into a mi"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.6985,
+    "model_score": 0.7808,
+    "style_score": 0.5064,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "The more important question, from our perspective, is the one you didn"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.6698,
+    "model_score": 0.7186,
+    "style_score": 0.5558,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Modern AI is rapidly shifting the burden of computing from local machi"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.7436,
+    "model_score": 0.8329,
+    "style_score": 0.5354,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "The Dietary Guidelines Advisory Committee, which meets every five year"
+  }
+]
+```
 
+**Criterion 2** — ten AI passages (the first ten) and ten human
+passages (the last ten). Mean confidence was 0.5905 for the AI group and 0.5830
+for the human group, a gap of 0.0075 against a target of 0.5.
+
+```json
+[
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.7767,
+    "model_score": 0.8534,
+    "style_score": 0.5976,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Urban green spaces play a vital role in improving the quality of life "
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5395,
+    "model_score": 0.5396,
+    "style_score": 0.5393,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Remote work has fundamentally changed the way organizations approach c"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.7245,
+    "model_score": 0.789,
+    "style_score": 0.574,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Regular physical activity offers a wide range of health benefits that "
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.726,
+    "model_score": 0.7715,
+    "style_score": 0.6198,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Renewable energy sources have become increasingly cost-competitive wit"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.6039,
+    "model_score": 0.6245,
+    "style_score": 0.5557,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Effective time management begins with a clear understanding of priorit"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5315,
+    "model_score": 0.5179,
+    "style_score": 0.5631,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Learning a second language provides cognitive benefits that persist th"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4344,
+    "model_score": 0.3725,
+    "style_score": 0.5789,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Food safety in commercial kitchens depends on consistent adherence to "
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4604,
+    "model_score": 0.4447,
+    "style_score": 0.497,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Financial planning for retirement requires balancing current spending "
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4846,
+    "model_score": 0.4682,
+    "style_score": 0.5228,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Public libraries have adapted considerably to changes in how people ac"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.6231,
+    "model_score": 0.6461,
+    "style_score": 0.5693,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Sleep quality has a measurable effect on cognitive performance, emotio"
+  },
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.3433,
+    "model_score": 0.2927,
+    "style_score": 0.4613,
+    "label": "We think this was written by a person. Thanks for sharing it.",
+    "sent": "In your breakout: bring your worst failure. Share the input and what y"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5292,
+    "model_score": 0.493,
+    "style_score": 0.6136,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Prorated by the second. If a service is active for ten seconds in a gi"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.6595,
+    "model_score": 0.7661,
+    "style_score": 0.4107,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Dogs have been bred for specific behaviors, sensory abilities, and phy"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4192,
+    "model_score": 0.4357,
+    "style_score": 0.3808,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "What makes your program special? Intentional Breeding, Not Mass Produc"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4952,
+    "model_score": 0.551,
+    "style_score": 0.365,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "I would assume #1 but only because dog meat is not commonly eaten in t"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5666,
+    "model_score": 0.5865,
+    "style_score": 0.5203,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Since the beginning of humankind, we have gone all the way from caves "
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.705,
+    "model_score": 0.7907,
+    "style_score": 0.5051,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Imagine yourself as a glass statue. It tips over and smashes into a mi"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.6985,
+    "model_score": 0.7808,
+    "style_score": 0.5064,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "The more important question, from our perspective, is the one you didn"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.6698,
+    "model_score": 0.7186,
+    "style_score": 0.5558,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Modern AI is rapidly shifting the burden of computing from local machi"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.7436,
+    "model_score": 0.8329,
+    "style_score": 0.5354,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "The Dietary Guidelines Advisory Committee, which meets every five year"
+  }
+]
+```
+
+**Criterion 3** — all three labels were reached. One entry per
+label from the thirty-passage run:
+
+```json
+[
+  {
+    "status": 200,
+    "guess": "human",
+    "confidence": 0.3433,
+    "model_score": 0.2927,
+    "style_score": 0.4613,
+    "label": "We think this was written by a person. Thanks for sharing it.",
+    "sent": "In your breakout: bring your worst failure. Share the input and what y"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5292,
+    "model_score": 0.493,
+    "style_score": 0.6136,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Prorated by the second. If a service is active for ten seconds in a gi"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.6595,
+    "model_score": 0.7661,
+    "style_score": 0.4107,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Dogs have been bred for specific behaviors, sensory abilities, and phy"
+  }
+]
+```
+
+**Criterion 4** — ten AI passages. Seven were not labelled `ai`,
+against a target of at most two.
+
+```json
+[
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.7767,
+    "model_score": 0.8534,
+    "style_score": 0.5976,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Urban green spaces play a vital role in improving the quality of life "
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5395,
+    "model_score": 0.5396,
+    "style_score": 0.5393,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Remote work has fundamentally changed the way organizations approach c"
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.7245,
+    "model_score": 0.789,
+    "style_score": 0.574,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Regular physical activity offers a wide range of health benefits that "
+  },
+  {
+    "status": 200,
+    "guess": "ai",
+    "confidence": 0.726,
+    "model_score": 0.7715,
+    "style_score": 0.6198,
+    "label": "We think this may have been written with an AI tool, but we could be wrong. If you wrote it yourself, just let us know and we'll take another look.",
+    "sent": "Renewable energy sources have become increasingly cost-competitive wit"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.6039,
+    "model_score": 0.6245,
+    "style_score": 0.5557,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Effective time management begins with a clear understanding of priorit"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.5315,
+    "model_score": 0.5179,
+    "style_score": 0.5631,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Learning a second language provides cognitive benefits that persist th"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4344,
+    "model_score": 0.3725,
+    "style_score": 0.5789,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Food safety in commercial kitchens depends on consistent adherence to "
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4604,
+    "model_score": 0.4447,
+    "style_score": 0.497,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Financial planning for retirement requires balancing current spending "
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.4846,
+    "model_score": 0.4682,
+    "style_score": 0.5228,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Public libraries have adapted considerably to changes in how people ac"
+  },
+  {
+    "status": 200,
+    "guess": "unsure",
+    "confidence": 0.6231,
+    "model_score": 0.6461,
+    "style_score": 0.5693,
+    "label": "We're not sure how this piece was written, and that's all this means. Nothing is wrong. If you'd like us to take another look, you can ask for a review.",
+    "sent": "Sleep quality has a measurable effect on cognitive performance, emotio"
+  }
+]
+```
+
+**Criterion 5** — ten requests with no usable text. All ten
+returned 400 and none were scored.
+
+```json
+[
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "(empty text)"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "{\"creator_id\": \"eval_bad_missing_1\"}"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "{\"creator_id\": \"eval_bad_missing_2\"}"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "{\"creator_id\": \"eval_bad_missing_3\"}"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "{\"text\": null, \"creator_id\": \"eval_bad_null_1\"}"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "{\"text\": null, \"creator_id\": \"eval_bad_null_2\"}"
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "   "
+  },
+  {
+    "status": 400,
+    "guess": null,
+    "confidence": null,
+    "model_score": null,
+    "style_score": null,
+    "label": null,
+    "sent": "\n\t  \n"
+  }
+]
 ```
 
 **Diagnoses**
